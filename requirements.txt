@@ -1,0 +1,14 @@
+# FiLM nnFormer — inference + training dependencies (pinned to the versions used).
+# Any CUDA build of torch works for inference (CPU also works, just slow).
+torch==2.10.0
+numpy==2.4.3
+timm==1.0.26            # DropPath, to_3tuple, trunc_normal_
+monai==1.5.2            # SlidingWindowInferer, SSIMLoss
+SimpleITK==2.5.0        # NIfTI I/O
+scipy==1.17.1           # pulled in transitively by the nnFormer base class (import-time only)
+batchgenerators==0.25.1 # pulled in transitively by the nnFormer base class (import-time only)
+safetensors==0.7.0      # optional: only if loading/saving .safetensors weights
+# Training only (zarr data pipeline):
+zarr==3.2.0
+numcodecs==0.16.5
+tqdm

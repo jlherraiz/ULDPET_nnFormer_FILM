@@ -1,0 +1,32 @@
+{
+  "scanner": "QUADRA",
+  "patch_size": [
+    96,
+    96,
+    96
+  ],
+  "embedding_dim": 64,
+  "num_heads": [
+    8,
+    16,
+    32,
+    64
+  ],
+  "depths": [
+    2,
+    2,
+    2,
+    2
+  ],
+  "d_cond": 1,
+  "COND_TRANSFORM": {
+    "kind": "log_div",
+    "log": "natural",
+    "divisor": 10.0,
+    "version": 1
+  },
+  "p_low": 0.0,
+  "p_high": 14973.4794921875,
+  "epoch": 40,
+  "val_loss": 0.00181
+}
