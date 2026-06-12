@@ -145,9 +145,10 @@ The DRF→cond values actually used:
 
 ## 5. Pretrained weights
 
-The two checkpoints are full training checkpoints (`model_state` + `config` +
-optimizer/RNG state). They are **self-describing** — `infer_nifti.py` rebuilds the
-architecture from `config` automatically.
+The released checkpoints are **weights-only safetensors** (`model_state` + an embedded
+`config`). They are **self-describing** — `infer_nifti.py` rebuilds the architecture
+from `config` automatically — and contain everything needed for inference and
+fine-tuning.
 
 The weights ship **in this repo** under `weights/`, so a plain `git clone` already
 gives you everything — no extra download step. They are also mirrored as
@@ -208,8 +209,11 @@ model.load_state_dict(load_file(path)); model.eval()
 cond_fn = make_cond_fn(cfg["COND_TRANSFORM"])         # cond_fn(DRF) -> conditioning scalar
 ```
 
-The full `.pt` training checkpoints remain available for *resuming training* (they
-also carry optimizer/RNG state); use safetensors for inference/distribution.
+The safetensors hold the model weights and are all you need for inference or
+fine-tuning. The original full `.pt` checkpoints additionally carry optimizer and RNG
+state — needed only to *resume training* from the exact stopping point — but they are
+**not distributed here** (221 MB each, over GitHub's file limit). If you need them for
+that purpose, contact the authors.
 
 ---
 
