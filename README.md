@@ -13,8 +13,9 @@ Two pretrained models are released, one per scanner:
 
 \* aggregate `0.95·L1 + 0.05·(1−SSIM)` on the held-out validation set, normalized [0,1] domain.
 
-> Weights are distributed separately (they are ~221 MB each; too large for a plain
-> git repo — use Git LFS or the release assets). See **Pretrained weights** below.
+> Weights are distributed separately as
+> **[release assets](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/latest)**
+> (too large for a plain git repo). See **Pretrained weights** below for download links.
 
 ---
 
@@ -134,22 +135,35 @@ The two checkpoints are full training checkpoints (`model_state` + `config` +
 optimizer/RNG state). They are **self-describing** — `infer_nifti.py` rebuilds the
 architecture from `config` automatically.
 
-Place them where you like and pass `--ckpt`. (Distribute via Git LFS or release
-assets; do not commit raw `.pt` to git history.)
+The weights are too large for plain git history, so they ship as
+**[release assets](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/latest)**.
+Download a checkpoint, place it where you like, and pass it with `--ckpt`.
 
-- `FILM_QUADRA_ep40_best.pt`   — Vision Quadra, best-by-val at epoch 40
-- `FILM_EXPLORER_ep20_best.pt` — uEXPLORER, best-by-val at epoch 20
+### Download (recommended: safetensors)
 
-### safetensors (recommended for distribution)
-
-Stripped, fp32, weights-only **safetensors** are provided in `weights/` — 74 MB each
-(vs 221 MB), and they load with **no code execution** (unlike pickle `.pt`). The
+Stripped, fp32, weights-only **safetensors** — 74 MB each (vs 221 MB for the full
+`.pt`), and they load with **no code execution** (unlike pickle `.pt`). The
 architecture config and normalization constants are embedded in the file metadata
-(and mirrored in a `*.config.json` sidecar), so they are fully self-describing:
+(and mirrored in a `*.config.json` sidecar), so they are fully self-describing.
 
+| Model | Scanner | Best epoch | Download |
+|-------|---------|-----------|----------|
+| FiLM-nnFormer Quadra    | Siemens Biograph Vision Quadra | 40 / 40 | [`.safetensors`](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_QUADRA_ep40_best.safetensors) · [`.config.json`](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_QUADRA_ep40_best.config.json) |
+| FiLM-nnFormer uEXPLORER | United Imaging uEXPLORER        | 20 / 50 | [`.safetensors`](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_EXPLORER_ep20_best.safetensors) · [`.config.json`](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_EXPLORER_ep20_best.config.json) |
+
+Fetch them from the command line into `./weights/` — with the GitHub CLI:
+
+```bash
+mkdir -p weights && gh release download v1.0.0 \
+    -R jlherraiz/ULDPET_nnFormer_FILM \
+    -p '*.safetensors' -p '*.config.json' -D weights/
 ```
-weights/FILM_QUADRA_ep40_best.safetensors    (+ .config.json)
-weights/FILM_EXPLORER_ep20_best.safetensors  (+ .config.json)
+
+or with `curl`:
+
+```bash
+curl -L -o weights/FILM_QUADRA_ep40_best.safetensors \
+  https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_QUADRA_ep40_best.safetensors
 ```
 
 `infer_nifti.py` accepts `.safetensors` or `.pt` transparently. With safetensors you
