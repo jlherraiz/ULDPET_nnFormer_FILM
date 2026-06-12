@@ -2,6 +2,8 @@ __pycache__/
 *.pyc
 *.pt
 *.safetensors
+# ...but the released model weights ARE tracked
+!weights/*.safetensors
 *.nii
 *.nii.gz
 *.zarr/

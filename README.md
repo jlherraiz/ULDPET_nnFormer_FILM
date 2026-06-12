@@ -13,9 +13,10 @@ Two pretrained models are released, one per scanner:
 
 \* aggregate `0.95·L1 + 0.05·(1−SSIM)` on the held-out validation set, normalized [0,1] domain.
 
-> Weights are distributed separately as
-> **[release assets](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/latest)**
-> (too large for a plain git repo). See **Pretrained weights** below for download links.
+> Pretrained weights ship **in this repo** under `weights/` (fp32 safetensors, 74 MB
+> each) and are also mirrored as
+> **[release assets](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/latest)**.
+> See **Pretrained weights** below.
 
 ---
 
@@ -47,6 +48,19 @@ loss from collapsing 5 models into 1. See **Results**.
 ---
 
 ## 2. Datasets
+
+**Data origin.** Both scanners' data comes from the **UDPET Challenge** (Ultra-Low
+Dose PET Imaging Challenge), <https://udpet-challenge.github.io/>. The full challenge
+dataset is **1,447** whole-body **¹⁸F-FDG** total-body PET subjects — **Siemens
+Biograph Vision Quadra (n=387)** and **United Imaging uEXPLORER (n=1,060)** — each with
+a standard-dose acquisition and simulated low-dose versions. Low-dose data is generated
+from **list-mode** acquisitions by rebinning the counts of a time window resampled at
+the middle of the scan with correspondingly reduced time, at five **dose-reduction
+factors (DRF 4, 10, 20, 50, 100)** plus full dose. Images are NIfTI in **Bq/mL** with a
+CSV of DICOM-header metadata (patient weight, injected activity, acquisition/injection
+time offsets, isotope half-life). Access requires a signed **Data Transfer Agreement**;
+the raw patient data is **not** redistributed here. The patient counts below are the
+subsets used to train these particular FiLM models.
 
 Two scanners, trained independently. Each patient contributes a **full-dose target**
 and several **simulated low-dose inputs** at fixed DRFs (the input at DRF *N* uses
@@ -135,23 +149,24 @@ The two checkpoints are full training checkpoints (`model_state` + `config` +
 optimizer/RNG state). They are **self-describing** — `infer_nifti.py` rebuilds the
 architecture from `config` automatically.
 
-The weights are too large for plain git history, so they ship as
-**[release assets](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/latest)**.
-Download a checkpoint, place it where you like, and pass it with `--ckpt`.
+The weights ship **in this repo** under `weights/`, so a plain `git clone` already
+gives you everything — no extra download step. They are also mirrored as
+**[release assets](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/latest)**
+if you'd rather grab a single file.
 
-### Download (recommended: safetensors)
+### The files (recommended format: safetensors)
 
 Stripped, fp32, weights-only **safetensors** — 74 MB each (vs 221 MB for the full
 `.pt`), and they load with **no code execution** (unlike pickle `.pt`). The
 architecture config and normalization constants are embedded in the file metadata
 (and mirrored in a `*.config.json` sidecar), so they are fully self-describing.
 
-| Model | Scanner | Best epoch | Download |
-|-------|---------|-----------|----------|
-| FiLM-nnFormer Quadra    | Siemens Biograph Vision Quadra | 40 / 40 | [`.safetensors`](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_QUADRA_ep40_best.safetensors) · [`.config.json`](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_QUADRA_ep40_best.config.json) |
-| FiLM-nnFormer uEXPLORER | United Imaging uEXPLORER        | 20 / 50 | [`.safetensors`](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_EXPLORER_ep20_best.safetensors) · [`.config.json`](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_EXPLORER_ep20_best.config.json) |
+| Model | Scanner | Best epoch | In repo | Release mirror |
+|-------|---------|-----------|---------|----------------|
+| FiLM-nnFormer Quadra    | Siemens Biograph Vision Quadra | 40 / 40 | `weights/FILM_QUADRA_ep40_best.safetensors` | [download](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_QUADRA_ep40_best.safetensors) |
+| FiLM-nnFormer uEXPLORER | United Imaging uEXPLORER        | 20 / 50 | `weights/FILM_EXPLORER_ep20_best.safetensors` | [download](https://github.com/jlherraiz/ULDPET_nnFormer_FILM/releases/download/v1.0.0/FILM_EXPLORER_ep20_best.safetensors) |
 
-Fetch them from the command line into `./weights/` — with the GitHub CLI:
+To pull just one file (e.g. without cloning) use the GitHub CLI:
 
 ```bash
 mkdir -p weights && gh release download v1.0.0 \
@@ -159,7 +174,7 @@ mkdir -p weights && gh release download v1.0.0 \
     -p '*.safetensors' -p '*.config.json' -D weights/
 ```
 
-or with `curl`:
+or `curl`:
 
 ```bash
 curl -L -o weights/FILM_QUADRA_ep40_best.safetensors \
@@ -306,3 +321,20 @@ high-DRF tail closing toward the per-DRF baseline.)
 Built on nnFormer (https://github.com/282857341/nnFormer). If you use these models,
 please cite nnFormer and this repository. See `MODEL_CARD.md` for intended use and
 limitations.
+
+**Data.** The training data is from the **UDPET Challenge** dataset
+(<https://udpet-challenge.github.io/>). If you use it, please cite the dataset paper:
+
+```bibtex
+@InProceedings{XueSon_UDPET_MICCAI2025,
+  author    = {Xue, Song and Wang, Hanzhong and Chen, Yizhou and Liu, Fanxuan and Zhu, Hong and Viscione, Marco and Guo, Rui and Rominger, Axel and Li, Biao and Shi, Kuangyu},
+  title     = {UDPET: Ultra-low Dose PET Imaging Challenge Dataset},
+  booktitle = {Medical Image Computing and Computer Assisted Intervention -- MICCAI 2025},
+  series    = {LNCS},
+  volume    = {15972},
+  pages     = {616--623},
+  year      = {2025},
+  publisher = {Springer Nature Switzerland},
+  doi       = {10.1007/978-3-032-05169-1_59}
+}
+```
