@@ -204,17 +204,18 @@ also carry optimizer/RNG state); use safetensors for inference/distribution.
 pip install -r requirements.txt
 
 python scripts/infer_nifti.py \
-    --ckpt        FILM_QUADRA_ep40_best.pt \
-    --input       low_dose_scan.nii.gz \
-    --drf         100 \
-    --percentiles global_percentiles_QUADRA.json \
-    --output      denoised.nii.gz
+    --ckpt   weights/FILM_QUADRA_ep40_best.safetensors \
+    --input  low_dose_scan.nii.gz \
+    --drf    100 \
+    --output denoised.nii.gz
 ```
 
 - `--drf` is the dose-reduction factor of the **input** (4/10/20/50/100; intermediate
   values also work — the conditioning interpolates).
-- Use the **matching** `global_percentiles_*.json` for the scanner the model was
-  trained on.
+- With **safetensors** the normalization percentiles come from the embedded config, so
+  `--percentiles` is not needed. For a raw `.pt` checkpoint, add
+  `--percentiles global_percentiles_QUADRA.json` (use the file **matching** the scanner
+  the model was trained on).
 - Output is de-normalized to the input intensity domain (Bq/mL), geometry preserved.
 - Add `--bf16` on Ampere+; default is fp32. (Never fp16.)
 
