@@ -20,39 +20,42 @@ Two pretrained models are released, one per scanner:
 
 ---
 
-## 1. What this is, and how it differs from the baseline
+## 1. The method: a DRF-conditioned nnFormer (nnFormer-FiLM)
 
-**Baseline (what we compare against):** a *separate* nnFormer denoiser trained for
-**each DRF** — 5 models per scanner (DRF 4/10/20/50/100), i.e. **10 models** total.
-Each model only ever sees one dose level. This is the **dedicated multi-model** (per-DRF,
-noise-specific) approach from Pablo Cabrales's
-[`low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235) repo — 3rd prize at
-the Ultra-Low Dose PET Imaging Challenge (IEEE MIC 2025, team 235).
-
-**This model (FiLM):** a *single* network per scanner, **conditioned on the DRF**.
-The DRF is encoded as a scalar `cond = ln(DRF)/10` and injected through
-**FiLM-modulated LayerNorms** (`AdaLayerNorm`) inside every Swin transformer block.
-The same weights handle all dose levels; you tell it the DRF at inference time.
+**nnFormer-FiLM (this repo):** a *single* network per scanner, **conditioned on the
+DRF**. The DRF is encoded as a scalar `cond = ln(DRF)/10` and injected through
+**FiLM-modulated LayerNorms** (`AdaLayerNorm`) inside every Swin transformer block. The
+same weights handle all dose levels (DRF 4/10/20/50/100); you tell it the DRF at
+inference time, so one checkpoint replaces a whole family of dose-specific models.
 
 > **Provenance.** This repository is an improved version — **more training epochs and
-> more data** — of the noise-adaptive nnFormer-FiLM approach that also lives in
-> [`low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235). Both the per-DRF
-> baseline above and that original FiLM model are by **Pablo Cabrales** (see
-> **Citation / attribution**).
+> more data** — of the nnFormer-FiLM approach, which also lives (currently uncredited)
+> in [`low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235). The FiLM
+> approach is by **Joaquín L. Herraiz**; the **nnFormer-Multimodel** baseline it is
+> compared against is by **Pablo Cabrales** (see **Citation / attribution**).
 
-| | Baseline | FiLM (this repo) |
+**Reference point — nnFormer-Multimodel.** For comparison, the multi-model alternative
+trains a *separate* nnFormer denoiser for **each DRF** — 5 models per scanner
+(DRF 4/10/20/50/100), i.e. **10 models** total; each model only ever sees one dose level.
+This is the per-DRF, noise-specific approach in Pablo Cabrales's
+[`low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235) repo (3rd prize at the
+Ultra-Low Dose PET Imaging Challenge, IEEE MIC 2025, team 235). That repo also covers
+DRF 2; it was of no clinical interest here and is intentionally **excluded** from this
+updated version.
+
+| | nnFormer-FiLM (this repo) | nnFormer-Multimodel |
 |---|---|---|
-| Models per scanner | 5 (one per DRF) | **1** |
-| DRF handling | implicit (separate weights) | explicit conditioning `ln(DRF)/10` |
-| Add a new DRF | retrain a new model | condition on the new value (interpolates) |
-| Storage / deployment | 5 checkpoints | 1 checkpoint |
-| Architecture | nnFormer | nnFormer + FiLM `AdaLayerNorm` |
+| Models per scanner | **1** | 5 (one per DRF) |
+| DRF handling | explicit conditioning `ln(DRF)/10` | implicit (separate weights) |
+| Add a new DRF | condition on the new value (interpolates) | retrain a new model |
+| Storage / deployment | 1 checkpoint | 5 checkpoints |
+| Architecture | nnFormer + FiLM `AdaLayerNorm` | nnFormer |
 | Training data, normalization, patch size, inferer | **identical** | **identical** |
 
-**Result:** on a like-for-like evaluation (same patients, same preprocessing, same
-sliding-window inferer; only the model differs), the single FiLM model **matches the
-per-DRF specialists to within ±0.0002 L1 / ±0.0007 SSIM** — no meaningful quality
-loss from collapsing 5 models into 1. See **Results**.
+On a like-for-like evaluation (same patients, same preprocessing, same sliding-window
+inferer; only the model differs), the single nnFormer-FiLM model **matches the per-DRF
+nnFormer-Multimodel specialists to within ±0.0002 L1 / ±0.0007 SSIM** — no meaningful
+quality loss from collapsing 5 models into 1. See **Results**.
 
 ---
 
@@ -253,11 +256,11 @@ de-normalize → write with original spacing/origin/direction.
 
 ---
 
-## 7. Results (FiLM vs per-DRF baseline)
+## 7. Results
 
 Held-out validation, normalized [0,1] domain. Lower L1 / higher SSIM is better.
 
-**QUADRA — FiLM (ep40) full validation (18 patients):**
+**QUADRA — nnFormer-FiLM (ep40) full validation (18 patients):**
 
 | DRF | L1 | SSIM |
 |---|---|---|
@@ -267,20 +270,20 @@ Held-out validation, normalized [0,1] domain. Lower L1 / higher SSIM is better.
 | 50  | 0.0017 | 0.9890 |
 | 100 | 0.0020 | 0.9855 |
 
-**QUADRA — paired FiLM vs per-DRF baseline** (identical pipeline, same 18 patients,
-same overlap 0.5; only the model differs):
+**QUADRA — paired nnFormer-FiLM vs nnFormer-Multimodel** (identical pipeline, same 18
+patients, same overlap 0.5; only the model differs):
 
-| DRF | FiLM L1 / SSIM | Baseline L1 / SSIM | Verdict |
+| DRF | nnFormer-FiLM L1 / SSIM | nnFormer-Multimodel L1 / SSIM | Verdict |
 |---|---|---|---|
-| 4   | 0.0011 / 0.9955 | 0.0009 / 0.9957 | ≈ (baseline +0.0002 L1) |
+| 4   | 0.0011 / 0.9955 | 0.0009 / 0.9957 | ≈ (Multimodel +0.0002 L1) |
 | 10  | 0.0013 / 0.9933 | 0.0012 / 0.9932 | tie |
 | 20  | 0.0014 / 0.9922 | 0.0014 / 0.9919 | tie |
 | 50  | 0.0018 / 0.9888 | 0.0017 / 0.9888 | tie |
-| 100 | 0.0021 / 0.9853 | 0.0020 / 0.9860 | ≈ (baseline +0.0007 SSIM) |
+| 100 | 0.0021 / 0.9853 | 0.0020 / 0.9860 | ≈ (Multimodel +0.0007 SSIM) |
 
 → **One conditioned model ≈ five specialist models**, within measurement noise.
 
-**EXPLORER — FiLM (ep20) full validation (≈49 patients):**
+**EXPLORER — nnFormer-FiLM (ep20) full validation (≈49 patients):**
 
 | DRF | L1 | SSIM |
 |---|---|---|
@@ -291,7 +294,7 @@ same overlap 0.5; only the model differs):
 | 100 | 0.0024 | 0.9796 |
 
 (EXPLORER was trained to epoch 20 of a planned 50; it was still improving, with the
-high-DRF tail closing toward the per-DRF baseline.)
+high-DRF tail closing toward the nnFormer-Multimodel.)
 
 ---
 
@@ -335,13 +338,18 @@ Built on nnFormer (https://github.com/282857341/nnFormer). If you use these mode
 please cite nnFormer and this repository. See `MODEL_CARD.md` for intended use and
 limitations.
 
-**Baseline model & original FiLM approach — Pablo Cabrales.** The per-DRF "dedicated"
-nnFormer baseline this repo compares against, and the original noise-adaptive
-nnFormer-FiLM model that this repo improves on (with more epochs and more training data),
-are by **Pablo Cabrales** (Universidad Complutense de Madrid),
-[`pcabrales/low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235) — 3rd prize
-at the Ultra-Low Dose PET Imaging Challenge (IEEE MIC 2025, team 235). Please credit that
-work when using these models.
+**Authorship.**
+
+- **nnFormer-FiLM (this repo)** — the DRF-conditioned approach — is by **Joaquín L.
+  Herraiz** (Universidad Complutense de Madrid). This release is an improved version
+  (more epochs, more training data) of that approach; an earlier version of it also
+  appears in [`pcabrales/low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235).
+- **nnFormer-Multimodel** — the per-DRF baseline it is compared against — is by **Pablo
+  Cabrales** (Universidad Complutense de Madrid),
+  [`pcabrales/low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235), 3rd prize
+  at the Ultra-Low Dose PET Imaging Challenge (IEEE MIC 2025, team 235).
+
+Please credit the corresponding authors when using either model.
 
 **Data.** The training data is from the **UDPET Challenge** dataset
 (<https://udpet-challenge.github.io/>). If you use it, please cite the dataset paper:
