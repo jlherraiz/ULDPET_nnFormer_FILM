@@ -29,10 +29,8 @@ same weights handle all dose levels (DRF 4/10/20/50/100); you tell it the DRF at
 inference time, so one checkpoint replaces a whole family of dose-specific models.
 
 > **Provenance.** This repository is an improved version — **more training epochs and
-> more data** — of the nnFormer-FiLM approach, which also lives (currently uncredited)
-> in [`low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235). The FiLM
-> approach is by **Joaquín L. Herraiz**; the **nnFormer-Multimodel** baseline it is
-> compared against is by **Pablo Cabrales** (see **Citation / attribution**).
+> more data** — of the nnFormer-FiLM approach, which also lives in 
+[`low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235). (See **Citation / attribution**).
 
 **Reference point — nnFormer-Multimodel.** For comparison, the multi-model alternative
 trains a *separate* nnFormer denoiser for **each DRF** — 5 models per scanner
