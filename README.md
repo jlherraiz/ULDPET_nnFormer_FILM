@@ -24,12 +24,21 @@ Two pretrained models are released, one per scanner:
 
 **Baseline (what we compare against):** a *separate* nnFormer denoiser trained for
 **each DRF** — 5 models per scanner (DRF 4/10/20/50/100), i.e. **10 models** total.
-Each model only ever sees one dose level.
+Each model only ever sees one dose level. This is the **dedicated multi-model** (per-DRF,
+noise-specific) approach from Pablo Cabrales's
+[`low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235) repo — 3rd prize at
+the Ultra-Low Dose PET Imaging Challenge (IEEE MIC 2025, team 235).
 
 **This model (FiLM):** a *single* network per scanner, **conditioned on the DRF**.
 The DRF is encoded as a scalar `cond = ln(DRF)/10` and injected through
 **FiLM-modulated LayerNorms** (`AdaLayerNorm`) inside every Swin transformer block.
 The same weights handle all dose levels; you tell it the DRF at inference time.
+
+> **Provenance.** This repository is an improved version — **more training epochs and
+> more data** — of the noise-adaptive nnFormer-FiLM approach that also lives in
+> [`low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235). Both the per-DRF
+> baseline above and that original FiLM model are by **Pablo Cabrales** (see
+> **Citation / attribution**).
 
 | | Baseline | FiLM (this repo) |
 |---|---|---|
@@ -325,6 +334,14 @@ high-DRF tail closing toward the per-DRF baseline.)
 Built on nnFormer (https://github.com/282857341/nnFormer). If you use these models,
 please cite nnFormer and this repository. See `MODEL_CARD.md` for intended use and
 limitations.
+
+**Baseline model & original FiLM approach — Pablo Cabrales.** The per-DRF "dedicated"
+nnFormer baseline this repo compares against, and the original noise-adaptive
+nnFormer-FiLM model that this repo improves on (with more epochs and more training data),
+are by **Pablo Cabrales** (Universidad Complutense de Madrid),
+[`pcabrales/low_dose_pet_235`](https://github.com/pcabrales/low_dose_pet_235) — 3rd prize
+at the Ultra-Low Dose PET Imaging Challenge (IEEE MIC 2025, team 235). Please credit that
+work when using these models.
 
 **Data.** The training data is from the **UDPET Challenge** dataset
 (<https://udpet-challenge.github.io/>). If you use it, please cite the dataset paper:
